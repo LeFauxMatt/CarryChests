@@ -1,0 +1,36 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35617.110
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CarryChests", "CarryChests\CarryChests.csproj", "{F6D6E894-EEB9-4D16-9BEC-C0FAF955AB88}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE.txt = LICENSE.txt
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = ".Common", "FauxCore\FauxCommon\.Common.shproj", "{966B9495-8681-44DA-9F8E-0838E5EB1A42}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F6D6E894-EEB9-4D16-9BEC-C0FAF955AB88}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F6D6E894-EEB9-4D16-9BEC-C0FAF955AB88}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F6D6E894-EEB9-4D16-9BEC-C0FAF955AB88}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F6D6E894-EEB9-4D16-9BEC-C0FAF955AB88}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {73E2B706-7FCD-40D7-B8F8-5E2B8A27AD6E}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		FauxCore\FauxCommon\FauxCommon.projitems*{966b9495-8681-44da-9f8e-0838e5eb1a42}*SharedItemsImports = 13
+		FauxCore\FauxCommon\FauxCommon.projitems*{f6d6e894-eeb9-4d16-9bec-c0faf955ab88}*SharedItemsImports = 5
+	EndGlobalSection
+EndGlobal

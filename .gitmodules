@@ -1,0 +1,4 @@
+[submodule "FauxCore"]
+	path = FauxCore
+	url = git@github.com:LeFauxMatt/FauxCore.git
+	branch = develop
