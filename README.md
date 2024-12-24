@@ -8,7 +8,6 @@ Stardew Valley mod which allows placed chests to be picked up and carried.
   - [Table of Contents](#table-of-contents)
   - [Configurations](#configurations)
   - [Translations](#translations)
-- [Credits](#credits)
 
 ## Configurations
 
@@ -59,10 +58,3 @@ from [Generic Mod Config Menu](https://www.nexusmods.com/stardewvalley/mods/5098
 | Russian    | [❌️](CarryChests/i18n/ru.json) |
 | Spanish    | [❌️](CarryChests/i18n/es.json) |
 | Turkish    | [❌️](CarryChests/i18n/tr.json) |
-
-# Credits
-
-Item Repository code was sourced
-from [CJB Item Spawner](https://github.com/CJBok/SDV-Mods/tree/master/CJBItemSpawner).
-
-Garbage Can spritesheet was created by 6480.
