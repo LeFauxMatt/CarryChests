@@ -19,7 +19,7 @@ internal class ModConfig : IConfigWithLogAmount
     public int TotalLimit { get; set; } = 3;
 
     /// <summary>
-    /// Copies the values from this instance to another instance.
+    ///     Copies the values from this instance to another instance.
     /// </summary>
     /// <param name="other">The other config instance.</param>
     public void CopyTo(ModConfig other)
