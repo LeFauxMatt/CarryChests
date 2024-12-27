@@ -24,11 +24,14 @@ internal sealed class ModEntry : Mod
         I18n.Init(this.Helper.Translation);
         this.configHelper = new ConfigHelper<ModConfig>(helper);
         this.config = this.configHelper.Load();
-
         Log.Init(this.Monitor, this.config);
 
         // Patches
         var harmony = new Harmony(this.ModManifest.UniqueID);
+
+        _ = harmony.Patch(
+            AccessTools.DeclaredMethod(typeof(Chest), nameof(Chest.addItem)),
+            new HarmonyMethod(typeof(ModEntry), nameof(Chest_addItem_prefix)));
 
         _ = harmony.Patch(
             AccessTools.DeclaredMethod(typeof(Item), nameof(Item.canBeDropped)),
@@ -65,15 +68,31 @@ internal sealed class ModEntry : Mod
         ModEvents.Subscribe<ConfigChangedEventArgs<ModConfig>>(this.OnConfigChanged);
     }
 
+    [SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony")]
+    private static bool Chest_addItem_prefix(Chest __instance, ref Item __result, Item item)
+    {
+        if (__instance != item)
+        {
+            return true;
+        }
+
+        __result = item;
+        return false;
+    }
+
+    [SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony")]
     private static void Item_canBeDropped_postfix(Item __instance, ref bool __result) =>
         __result = __result && __instance is not Chest;
 
+    [SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony")]
     private static void Item_canBeTrashed_postfix(Item __instance, ref bool __result) =>
         __result = __result && __instance is not Chest;
 
+    [SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony")]
     private static void Item_canStackWith_postfix(Item __instance, ref bool __result, ISalable other) =>
         __result = __result && __instance is not Chest && other is not Chest;
 
+    [SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony")]
     private static void Object_drawInMenu_postfix(
         SObject __instance,
         SpriteBatch spriteBatch,
@@ -101,6 +120,7 @@ internal sealed class ModEntry : Mod
         Utility.drawTinyDigits(items, spriteBatch, position, 3f * scaleSize, 1f, color);
     }
 
+    [SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony")]
     private static bool Object_drawWhenHeld_prefix(SObject __instance, SpriteBatch spriteBatch, Vector2 objectPosition)
     {
         if (__instance is not Chest chest)
@@ -113,9 +133,11 @@ internal sealed class ModEntry : Mod
         return false;
     }
 
+    [SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony")]
     private static void Object_maximumStackSize_postfix(SObject __instance, ref int __result) =>
         __result = __result > 1 && __instance is Chest ? 1 : __result;
 
+    [SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony")]
     private static void Object_placementAction_postfix(
         SObject __instance,
         GameLocation location,
@@ -148,89 +170,22 @@ internal sealed class ModEntry : Mod
         who.showNotCarrying();
     }
 
-    private void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
+    private static bool PickUpChest(Chest chest)
     {
-        // Handle if tool button is used, without a tool, on a placed chest
-        if (!Context.IsPlayerFree
-            || !e.Button.IsUseToolButton()
-            || Game1.player.CurrentItem is Tool
-            || !Game1.currentLocation.Objects.TryGetValue(e.Cursor.GrabTile, out var @object)
-            || @object is not Chest chest)
-        {
-            return;
-        }
-
-        if (chest.performObjectDropInAction(Game1.player.CurrentItem, true, Game1.player))
-        {
-            if (Game1.player.CurrentItem is not Chest heldChest)
-            {
-                return;
-            }
-
-            // Safely replicate the vanilla swap action
-            this.Helper.Input.Suppress(e.Button);
-            if (chest.GetMutex().IsLocked())
-            {
-                return;
-            }
-
-            var newChest = new Chest(true, e.Cursor.GrabTile, heldChest.ItemId);
-
-            // Try adding held items to new chest
-            foreach (var item in heldChest.GetItemsForPlayer())
-            {
-                var remaining = newChest.addItem(item);
-                if (remaining is not null)
-                {
-                    return;
-                }
-            }
-
-            // Try adding exiting items to new chest
-            foreach (var item in chest.GetItemsForPlayer())
-            {
-                var remaining = newChest.addItem(item);
-                if (remaining is not null)
-                {
-                    return;
-                }
-            }
-
-            newChest.playerChoiceColor.Value = chest.playerChoiceColor.Value;
-            newChest.Tint = chest.Tint;
-            newChest.modData.CopyFrom(chest.modData);
-
-            var location = chest.Location;
-            var tileLocation = chest.TileLocation;
-            _ = location.Objects.Remove(chest.TileLocation);
-            location.Objects.Add(chest.TileLocation, newChest);
-            Game1.player.reduceActiveItemByOne();
-            Game1.createMultipleItemDebris(
-                ItemRegistry.Create(chest.QualifiedItemId),
-                (tileLocation * Game1.tileSize) + new Vector2(32f),
-                -1);
-
-            Log.Trace(
-                "CarryChest: Swapped chest from {0} at ({1}, {2})",
-                location.Name,
-                tileLocation.X,
-                tileLocation.Y);
-
-            Game1.currentLocation.playSound("axchop");
-            return;
-        }
-
-        // Grab the item
+        // Grab as item
         if (chest.GetItemsForPlayer().CountItemStacks() == 0
             && Game1.player.addItemToInventoryBool(ItemRegistry.Create(chest.QualifiedItemId)))
         {
-            _ = chest.Location.Objects.Remove(chest.TileLocation);
-            _ = Game1.playSound("pickUpItem");
-            this.Helper.Input.Suppress(e.Button);
-            return;
+            Log.Trace(
+                "CarryChest: Grabbed chest from {0} at ({1}, {2})",
+                chest.Location.Name,
+                chest.TileLocation.X,
+                chest.TileLocation.Y);
+
+            return true;
         }
 
-        // Grab the chest
+        // Grab as chest
         if (Game1.player.addItemToInventoryBool(chest, true))
         {
             Log.Trace(
@@ -239,9 +194,106 @@ internal sealed class ModEntry : Mod
                 chest.TileLocation.X,
                 chest.TileLocation.Y);
 
-            _ = chest.Location.Objects.Remove(chest.TileLocation);
-            _ = Game1.playSound("pickUpItem");
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool SwapChest(Chest chest)
+    {
+        if (!chest.performObjectDropInAction(Game1.player.CurrentItem, true, Game1.player))
+        {
+            return false;
+        }
+
+        if (Game1.player.CurrentItem is not Chest heldChest)
+        {
+            return false;
+        }
+
+        // Safely replicate the vanilla swap action
+        if (chest.GetMutex().IsLocked())
+        {
+            return true;
+        }
+
+        var newChest = new Chest(true, chest.TileLocation, heldChest.ItemId);
+
+        // Try adding held items to new chest
+        foreach (var item in heldChest.GetItemsForPlayer())
+        {
+            var remaining = newChest.addItem(item);
+            if (remaining is not null)
+            {
+                return true;
+            }
+        }
+
+        // Try adding exiting items to new chest
+        foreach (var item in chest.GetItemsForPlayer())
+        {
+            var remaining = newChest.addItem(item);
+            if (remaining is not null)
+            {
+                return true;
+            }
+        }
+
+        newChest.playerChoiceColor.Value = chest.playerChoiceColor.Value;
+        newChest.Tint = chest.Tint;
+        newChest.modData.CopyFrom(chest.modData);
+
+        var location = chest.Location;
+        var tileLocation = chest.TileLocation;
+        _ = location.Objects.Remove(chest.TileLocation);
+        location.Objects.Add(chest.TileLocation, newChest);
+        Game1.player.reduceActiveItemByOne();
+        Game1.createMultipleItemDebris(
+            ItemRegistry.Create(chest.QualifiedItemId),
+            (tileLocation * Game1.tileSize) + new Vector2(32f),
+            -1);
+
+        Log.Trace(
+            "CarryChest: Swapped chest from {0} at ({1}, {2})",
+            location.Name,
+            tileLocation.X,
+            tileLocation.Y);
+
+        Game1.currentLocation.playSound("axchop");
+        return true;
+    }
+
+    private void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
+    {
+        if (!Context.IsPlayerFree
+            || Game1.player.CurrentItem is Tool)
+        {
+            return;
+        }
+
+        // Handle if tool button is used, without a tool, on a placed chest
+        if (e.Button.IsUseToolButton() && Game1.currentLocation.Objects.TryGetValue(e.Cursor.GrabTile, out var @object)
+                                       && @object is Chest chest)
+        {
+            if (SwapChest(chest))
+            {
+                this.Helper.Input.Suppress(e.Button);
+            }
+            else if (PickUpChest(chest))
+            {
+                this.Helper.Input.Suppress(e.Button);
+                _ = chest.Location.Objects.Remove(chest.TileLocation);
+                _ = Game1.playSound("pickUpItem");
+            }
+
+            return;
+        }
+
+        if (e.Button.IsActionButton() && Game1.player.ActiveObject is Chest heldChest)
+        {
             this.Helper.Input.Suppress(e.Button);
+            heldChest.ShowMenu();
         }
     }
 

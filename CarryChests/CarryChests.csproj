@@ -1,26 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <Import Project="..\FauxCore\FauxCommon\Common.targets" />
-  <Import Project="..\FauxCore\FauxCommon\FauxCommon.projitems" Label="Shared" />
+	<Import Project="..\FauxCore\FauxCommon\Common.targets" />
+	<Import Project="..\FauxCore\FauxCommon\FauxCommon.projitems" Label="Shared" />
 
-  <PropertyGroup>
-    <Name>Carry Chests</Name>
-    <Description>Allows you to pick up placed chests with items.</Description>
-    <Version>1.0.0</Version>
-	  <EnableHarmony>true</EnableHarmony>
-    <RootNamespace>LeFauxMods.CarryChest</RootNamespace>
-    <UniqueId>furyx639.CarryChest</UniqueId>
-    <UpdateKeys>Nexus:30321, GitHub:LeFauxMatt/CarryChest</UpdateKeys>
-    <RepositoryUrl>https://github.com/LeFauxMatt/CarryChest</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-  </PropertyGroup>
+	<PropertyGroup>
+		<Name>Carry Chests</Name>
+		<Description>Allows you to pick up placed chests with items.</Description>
+		<Version>1.1.0-alpha.1</Version>
+		<EnableHarmony>true</EnableHarmony>
+		<RootNamespace>LeFauxMods.CarryChest</RootNamespace>
+		<UniqueId>furyx639.CarryChest</UniqueId>
+		<UpdateKeys>Nexus:30321, GitHub:LeFauxMatt/CarryChest</UpdateKeys>
+		<RepositoryUrl>https://github.com/LeFauxMatt/CarryChest</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+	</PropertyGroup>
 
-  <ItemGroup>
-	  <PackageReference Include="Pathoschild.Stardew.ModTranslationClassBuilder" Version="2.2.0" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Pathoschild.Stardew.ModTranslationClassBuilder" Version="2.2.0" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <SMAPIDependency Include="spacechase0.GenericModConfigMenu" Version="1.14.1" required="false" />
-  </ItemGroup>
+	<ItemGroup>
+		<SMAPIDependency Include="spacechase0.GenericModConfigMenu" Version="1.14.1" required="false" />
+	</ItemGroup>
 
 </Project>
