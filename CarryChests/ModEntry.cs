@@ -170,36 +170,6 @@ internal sealed class ModEntry : Mod
         who.showNotCarrying();
     }
 
-    private static bool PickUpChest(Chest chest)
-    {
-        // Grab as item
-        if (chest.GetItemsForPlayer().CountItemStacks() == 0
-            && Game1.player.addItemToInventoryBool(ItemRegistry.Create(chest.QualifiedItemId)))
-        {
-            Log.Trace(
-                "CarryChest: Grabbed chest from {0} at ({1}, {2})",
-                chest.Location.Name,
-                chest.TileLocation.X,
-                chest.TileLocation.Y);
-
-            return true;
-        }
-
-        // Grab as chest
-        if (Game1.player.addItemToInventoryBool(chest, true))
-        {
-            Log.Trace(
-                "CarryChest: Grabbed chest from {0} at ({1}, {2})",
-                chest.Location.Name,
-                chest.TileLocation.X,
-                chest.TileLocation.Y);
-
-            return true;
-        }
-
-        return false;
-    }
-
     private static bool SwapChest(Chest chest)
     {
         if (!chest.performObjectDropInAction(Game1.player.CurrentItem, true, Game1.player))
@@ -280,7 +250,7 @@ internal sealed class ModEntry : Mod
             {
                 this.Helper.Input.Suppress(e.Button);
             }
-            else if (PickUpChest(chest))
+            else if (this.PickUpChest(chest))
             {
                 this.Helper.Input.Suppress(e.Button);
                 _ = chest.Location.Objects.Remove(chest.TileLocation);
@@ -290,7 +260,7 @@ internal sealed class ModEntry : Mod
             return;
         }
 
-        if (e.Button.IsActionButton() && Game1.player.ActiveObject is Chest heldChest)
+        if (this.config.OpenHeldChest && e.Button.IsActionButton() && Game1.player.ActiveObject is Chest heldChest)
         {
             this.Helper.Input.Suppress(e.Button);
             heldChest.ShowMenu();
@@ -299,9 +269,7 @@ internal sealed class ModEntry : Mod
 
     private void OnConfigChanged(ConfigChangedEventArgs<ModConfig> e)
     {
-        this.Helper.Events.Input.ButtonPressed -= this.OnButtonPressed;
         this.Helper.Events.GameLoop.OneSecondUpdateTicked -= this.OnOneSecondUpdateTicked;
-
         if (e.Config.SlownessLimit > 0 && e.Config.SlownessAmount != 0)
         {
             this.Helper.Events.GameLoop.OneSecondUpdateTicked += this.OnOneSecondUpdateTicked;
@@ -347,6 +315,13 @@ internal sealed class ModEntry : Mod
             value => tempConfig.SlownessLimit = value,
             I18n.ConfigOption_SlownessLimit_Name,
             I18n.ConfigOption_SlownessLimit_Description);
+
+        gmcm.Api.AddBoolOption(
+            this.ModManifest,
+            () => tempConfig.OpenHeldChest,
+            value => tempConfig.OpenHeldChest = value,
+            I18n.ConfigOption_OpenHeldChest_Name,
+            I18n.ConfigOption_OpenHeldChest_Description);
     }
 
     private void OnOneSecondUpdateTicked(object? sender, OneSecondUpdateTickedEventArgs e)
@@ -389,5 +364,37 @@ internal sealed class ModEntry : Mod
         {
             this.Helper.Events.GameLoop.OneSecondUpdateTicked += this.OnOneSecondUpdateTicked;
         }
+    }
+
+    private bool PickUpChest(Chest chest)
+    {
+        // Grab as item
+        if (chest.GetItemsForPlayer().CountItemStacks() == 0
+            && Game1.player.addItemToInventoryBool(ItemRegistry.Create(chest.QualifiedItemId)))
+        {
+            Log.Trace(
+                "CarryChest: Grabbed chest from {0} at ({1}, {2})",
+                chest.Location.Name,
+                chest.TileLocation.X,
+                chest.TileLocation.Y);
+
+            return true;
+        }
+
+        // Grab as chest
+        if ((this.config.TotalLimit > 0
+             && Game1.player.Items.OfType<Chest>().Count() >= this.config.TotalLimit)
+            || !Game1.player.addItemToInventoryBool(chest, true))
+        {
+            return false;
+        }
+
+        Log.Trace(
+            "CarryChest: Grabbed chest from {0} at ({1}, {2})",
+            chest.Location.Name,
+            chest.TileLocation.X,
+            chest.TileLocation.Y);
+
+        return true;
     }
 }

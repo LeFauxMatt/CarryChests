@@ -9,6 +9,9 @@ internal class ModConfig : IConfigWithLogAmount
     /// <inheritdoc />
     public LogAmount LogAmount { get; set; }
 
+    /// <summary>Gets or sets a value indicating whether held chests can be opened.</summary>
+    public bool OpenHeldChest { get; set; } = true;
+
     /// <summary>Gets or sets the amount the player will be slowed when carrying chests above the limit.</summary>
     public float SlownessAmount { get; set; } = -1f;
 

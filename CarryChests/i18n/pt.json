@@ -1,5 +1,7 @@
 {
   "alert.carry-chest-limit": "Cannot carry any more chests",
+  "config-option.open-held-chest.name": "Open Held Chests",
+  "config-option.open-held-chest.description": "Allow you to open the currently held chest.",
   "config-option.total-limit.name": "Carry Chest Limit",
   "config-option.total-limit.description": "Limits the number of chests that can be carried at once.",
   "config-option.slowness-amount.name": "Slowness Amount",

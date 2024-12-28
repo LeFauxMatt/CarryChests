@@ -6,7 +6,7 @@
 	<PropertyGroup>
 		<Name>Carry Chests</Name>
 		<Description>Allows you to pick up placed chests with items.</Description>
-		<Version>1.1.0-alpha.1</Version>
+		<Version>1.1.0-beta.1</Version>
 		<EnableHarmony>true</EnableHarmony>
 		<RootNamespace>LeFauxMods.CarryChest</RootNamespace>
 		<UniqueId>furyx639.CarryChest</UniqueId>
