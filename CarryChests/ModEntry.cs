@@ -1,4 +1,5 @@
 using HarmonyLib;
+using LeFauxMods.CarryChest.Utilities;
 using LeFauxMods.Common.Integrations.GenericModConfigMenu;
 using LeFauxMods.Common.Models;
 using LeFauxMods.Common.Services;
@@ -146,8 +147,7 @@ internal sealed class ModEntry : Mod
         Farmer who,
         ref bool __result)
     {
-        // Only handle placed chests
-        if (!__result || __instance is not Chest chest)
+        if (!__result)
         {
             return;
         }
@@ -157,9 +157,46 @@ internal sealed class ModEntry : Mod
         if (!location.Objects.TryGetValue(
                 new Vector2((int)(x / (float)Game1.tileSize), (int)(y / (float)Game1.tileSize)),
                 out var placedObject)
-            || placedObject is not Chest)
+            || placedObject is not Chest placedChest)
         {
             return;
+        }
+
+        string id;
+        if (__instance is not Chest chest)
+        {
+            // Attempt to restore Better Chest proxy
+            if (__instance.modData.TryGetValue(Constants.GlobalInventoryKey, out id) &&
+                Game1.player.team.globalInventories.ContainsKey(id))
+            {
+                var color = Color.Black;
+                if (__instance.modData.TryGetValue(Constants.ColorKey, out var colorString) &&
+                    int.TryParse(colorString, out var colorValue))
+                {
+                    var r = (byte)(colorValue & 0xFF);
+                    var g = (byte)((colorValue >> 8) & 0xFF);
+                    var b = (byte)((colorValue >> 16) & 0xFF);
+                    color = new Color(r, g, b);
+                }
+
+                chest = placedChest;
+                chest.GlobalInventoryId = id;
+                chest.playerChoiceColor.Value = color;
+                chest.fridge.Value = __instance.modData.ContainsKey(Constants.FridgeKey);
+
+                foreach (var (key, value) in __instance.modData.Pairs)
+                {
+                    chest.modData[key] = value;
+                }
+
+                chest.modData.Remove(Constants.FridgeKey);
+                chest.modData.Remove(Constants.ColorKey);
+                chest.modData.Remove(Constants.GlobalInventoryKey);
+            }
+            else
+            {
+                return;
+            }
         }
 
         location.Objects[placementTile] = chest;
@@ -168,6 +205,20 @@ internal sealed class ModEntry : Mod
         chest.shakeTimer = 50;
         who.removeItemFromInventory(who.CurrentItem);
         who.showNotCarrying();
+
+        // Move items from temporary global inventory back to chest
+        if (string.IsNullOrWhiteSpace(chest.GlobalInventoryId) ||
+            !chest.GlobalInventoryId.StartsWith(Constants.Prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        id = chest.GlobalInventoryId;
+        var globalInventory = Game1.player.team.GetOrCreateGlobalInventory(id);
+        chest.GlobalInventoryId = null;
+        chest.Items.OverwriteWith(globalInventory);
+        Game1.player.team.globalInventories.Remove(id);
+        Game1.player.team.globalInventoryMutexes.Remove(id);
     }
 
     private static bool SwapChest(Chest chest)
@@ -395,6 +446,16 @@ internal sealed class ModEntry : Mod
             chest.TileLocation.X,
             chest.TileLocation.Y);
 
+        if (!string.IsNullOrWhiteSpace(chest.GlobalInventoryId))
+        {
+            return true;
+        }
+
+        var temporaryId = InventoryHelper.GetTemporaryId();
+        var globalInventory = Game1.player.team.GetOrCreateGlobalInventory(temporaryId);
+        globalInventory.OverwriteWith(chest.GetItemsForPlayer());
+        chest.GlobalInventoryId = temporaryId;
+        chest.Items.Clear();
         return true;
     }
 }
