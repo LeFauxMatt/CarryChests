@@ -12,6 +12,9 @@ internal class ModConfig : IConfigWithLogAmount
     /// <summary>Gets or sets a value indicating whether held chests can be opened.</summary>
     public bool OpenHeldChest { get; set; } = true;
 
+    /// <summary>Gets or sets a value indicating whether to override using a tool against a chest.</summary>
+    public bool OverrideTool { get; set; }
+
     /// <summary>Gets or sets the amount the player will be slowed when carrying chests above the limit.</summary>
     public float SlownessAmount { get; set; } = -1f;
 
@@ -28,6 +31,8 @@ internal class ModConfig : IConfigWithLogAmount
     public void CopyTo(ModConfig other)
     {
         other.LogAmount = this.LogAmount;
+        other.OpenHeldChest = this.OpenHeldChest;
+        other.OverrideTool = this.OverrideTool;
         other.SlownessAmount = this.SlownessAmount;
         other.SlownessLimit = this.SlownessLimit;
         other.TotalLimit = this.TotalLimit;

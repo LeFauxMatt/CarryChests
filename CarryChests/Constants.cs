@@ -2,8 +2,6 @@ namespace LeFauxMods.CarryChest;
 
 internal static class Constants
 {
-    public const string AlphaNumeric = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
     public const string ColorKey = Prefix + "PlayerChoiceColor";
 
     public const string FridgeKey = Prefix + "Fridge";
