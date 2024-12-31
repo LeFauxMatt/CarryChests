@@ -197,11 +197,6 @@ internal static class ModPatches
             return;
         }
 
-        id = chest.GlobalInventoryId;
-        var globalInventory = Game1.player.team.GetOrCreateGlobalInventory(id);
-        chest.GlobalInventoryId = null;
-        chest.Items.OverwriteWith(globalInventory);
-        Game1.player.team.globalInventories.Remove(id);
-        Game1.player.team.globalInventoryMutexes.Remove(id);
+        chest.ToLocalInventory();
     }
 }

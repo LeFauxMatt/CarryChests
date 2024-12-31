@@ -40,11 +40,8 @@ internal static class InventoryHelper
             return true;
         }
 
-        var temporaryId = CommonHelper.GetTemporaryId(Constants.Prefix);
-        var globalInventory = Game1.player.team.GetOrCreateGlobalInventory(temporaryId);
-        globalInventory.OverwriteWith(chest.GetItemsForPlayer());
-        chest.GlobalInventoryId = temporaryId;
-        chest.Items.Clear();
+        var temporaryId = CommonHelper.GetUniqueId(Constants.Prefix);
+        chest.ToGlobalInventory(temporaryId);
         return true;
     }
 
