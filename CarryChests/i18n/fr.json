@@ -1,9 +1,9 @@
 {
   "alert.carry-chest-limit": "Ne peut pas transporter davantage de coffre",
-  "config-option.open-held-chest.name": "Open Held Chests",
-  "config-option.open-held-chest.description": "Allow you to open the currently held chest.",
-  "config-option.override-toool.name": "Override Tool",
-  "config-option.override-tool.description": "Override using a tool on a chest to pick it up.",
+  "config-option.open-held-chest.name": "Ouvrir les coffres portés",
+  "config-option.open-held-chest.description": "Vous permet d’ouvrir les coffres transportés.",
+  "config-option.override-toool.name": "Ramassage par l’outil",
+  "config-option.override-tool.description":  "Utiliser un outil sur un coffre le ramassera à la place de l’action par défaut.",
   "config-option.total-limit.name": "Limite de transport de coffre",
   "config-option.total-limit.description": "Limite le nombre de coffre transportés à la fois.",
   "config-option.slowness-amount.name": "Montant de ralentissement",
