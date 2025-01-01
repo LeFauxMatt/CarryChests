@@ -1,82 +1,68 @@
 using LeFauxMods.Common.Integrations.GenericModConfigMenu;
 using LeFauxMods.Common.Services;
-using StardewModdingAPI.Events;
 
 namespace LeFauxMods.CarryChest.Services;
 
+/// <summary>Responsible for handling the mod configuration menu.</summary>
 internal sealed class ConfigMenu
 {
-    private readonly ModConfig config;
-    private readonly ConfigHelper<ModConfig> configHelper;
-    private readonly ModConfig defaultConfig;
+    private readonly IGenericModConfigMenuApi api = null!;
     private readonly GenericModConfigMenuIntegration gmcm;
     private readonly IManifest manifest;
-    private readonly ModConfig tempConfig;
 
-    public ConfigMenu(IModHelper helper, IManifest manifest, ModConfig config, ConfigHelper<ModConfig> configHelper)
+    public ConfigMenu(IModHelper helper, IManifest manifest)
     {
         this.manifest = manifest;
-        this.config = config;
-        this.configHelper = configHelper;
-        this.defaultConfig = new ModConfig();
-        this.tempConfig = configHelper.Load();
-
         this.gmcm = new GenericModConfigMenuIntegration(manifest, helper.ModRegistry);
         if (!this.gmcm.IsLoaded)
         {
             return;
         }
 
-        helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
+        this.api = this.gmcm.Api;
+        this.SetupMenu();
     }
 
-    private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
+    private static ModConfig Config => ModState.ConfigHelper.Temp;
+
+    private static ConfigHelper<ModConfig> ConfigHelper => ModState.ConfigHelper;
+
+    private void SetupMenu()
     {
-        if (!this.gmcm.IsLoaded)
-        {
-            return;
-        }
+        this.gmcm.Register(ConfigHelper.Reset, ConfigHelper.Save);
 
-        this.gmcm.Register(
-            () => this.defaultConfig.CopyTo(this.tempConfig),
-            () =>
-            {
-                this.tempConfig.CopyTo(this.config);
-                this.configHelper.Save(this.tempConfig);
-            });
-
-        this.gmcm.Api.AddNumberOption(
+        this.api.AddNumberOption(
             this.manifest,
-            () => this.tempConfig.TotalLimit,
-            value => this.tempConfig.TotalLimit = value,
+            static () => Config.TotalLimit,
+            static value => Config.TotalLimit = value,
             I18n.ConfigOption_TotalLimit_Name,
             I18n.ConfigOption_TotalLimit_Description);
 
-        this.gmcm.Api.AddNumberOption(
+        this.api.AddNumberOption(
             this.manifest,
-            () => this.tempConfig.SlownessAmount,
-            value => this.tempConfig.SlownessAmount = value,
+            static () => Config.SlownessAmount,
+            static value => Config.SlownessAmount = value,
             I18n.ConfigOption_SlownessAmount_Name,
             I18n.ConfigOption_SlownessAmount_Description);
 
-        this.gmcm.Api.AddNumberOption(
+        this.api.AddNumberOption(
             this.manifest,
-            () => this.tempConfig.SlownessLimit,
-            value => this.tempConfig.SlownessLimit = value,
+            static () => Config.SlownessLimit,
+            static value => Config.SlownessLimit = value,
             I18n.ConfigOption_SlownessLimit_Name,
             I18n.ConfigOption_SlownessLimit_Description);
 
-        this.gmcm.Api.AddBoolOption(
+        this.api.AddBoolOption(
             this.manifest,
-            () => this.tempConfig.OpenHeldChest,
-            value => this.tempConfig.OpenHeldChest = value,
+            static () => Config.OpenHeldChest,
+            static value => Config.OpenHeldChest = value,
             I18n.ConfigOption_OpenHeldChest_Name,
             I18n.ConfigOption_OpenHeldChest_Description);
 
-        this.gmcm.Api.AddBoolOption(
+        this.api.AddBoolOption(
             this.manifest,
-            () => this.tempConfig.OverrideTool,
-            value => this.tempConfig.OverrideTool = value,
+            static () => Config.OverrideTool,
+            static value => Config.OverrideTool = value,
             I18n.ConfigOption_OverrideToool_Name,
             I18n.ConfigOption_OverrideTool_Description);
     }

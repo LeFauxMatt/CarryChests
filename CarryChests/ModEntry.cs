@@ -1,7 +1,6 @@
 using LeFauxMods.CarryChest.Services;
 using LeFauxMods.CarryChest.Utilities;
 using LeFauxMods.Common.Models;
-using LeFauxMods.Common.Services;
 using LeFauxMods.Common.Utilities;
 using StardewModdingAPI.Events;
 using StardewValley.Buffs;
@@ -12,55 +11,74 @@ namespace LeFauxMods.CarryChest;
 /// <inheritdoc />
 internal sealed class ModEntry : Mod
 {
-    private ModConfig config = null!;
-
     /// <inheritdoc />
     public override void Entry(IModHelper helper)
     {
-        // Init
-        I18n.Init(this.Helper.Translation);
-        var configHelper = new ConfigHelper<ModConfig>(helper);
-        this.config = configHelper.Load();
-        Log.Init(this.Monitor, this.config);
-        ModPatches.Init();
-        _ = new ConfigMenu(helper, this.ModManifest, this.config, configHelper);
+        // Apply
+        ModEvents.Subscribe<ConfigChangedEventArgs<ModConfig>>(this.OnConfigChanged);
+        I18n.Init(helper.Translation);
+        ModState.Init(helper);
+        Log.Init(this.Monitor, ModState.Config);
+        ModPatches.Apply();
 
         // TBD: Command to access global inventory chests
 
         // Events
+        helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
         helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
         helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
-        ModEvents.Subscribe<ConfigChangedEventArgs<ModConfig>>(this.OnConfigChanged);
     }
+
+    private void OnGameLaunched(object? sender, GameLaunchedEventArgs e) =>
+        _ = new ConfigMenu(this.Helper, this.ModManifest);
 
     private void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
     {
-        if (!Context.IsPlayerFree
-            || (Game1.player.CurrentItem is Tool && !this.config.OverrideTool))
+        if (!Context.IsPlayerFree)
         {
             return;
         }
 
-        // Handle if tool button is used, without a tool, on a placed chest
-        if (e.Button.IsUseToolButton() && Game1.currentLocation.Objects.TryGetValue(e.Cursor.GrabTile, out var @object)
-                                       && @object is Chest chest)
+        if (e.Button.IsUseToolButton())
         {
+            if (Game1.player.CurrentItem is Tool && !ModState.Config.OverrideTool)
+            {
+                return;
+            }
+
+            var tile = e.Button.TryGetController(out _) ? e.Cursor.GrabTile : e.Cursor.Tile;
+            if (Math.Abs(Game1.player.Tile.X - tile.X) > 1 ||
+                Math.Abs(Game1.player.Tile.Y - tile.Y) > 1 ||
+                !Game1.currentLocation.Objects.TryGetValue(tile, out var obj)
+                || obj is not Chest chest)
+            {
+                return;
+            }
+
             if (InventoryHelper.SwapChest(chest))
             {
                 this.Helper.Input.Suppress(e.Button);
+                return;
             }
-            else if (InventoryHelper.PickUpChest(chest, this.config.TotalLimit))
+
+            if (InventoryHelper.PickUpChest(chest, ModState.Config.TotalLimit))
             {
                 this.Helper.Input.Suppress(e.Button);
                 _ = chest.Location.Objects.Remove(chest.TileLocation);
                 _ = Game1.playSound("pickUpItem");
             }
 
+            this.Helper.Input.Suppress(e.Button);
             return;
         }
 
-        if (this.config.OpenHeldChest && e.Button.IsActionButton() && Game1.player.ActiveObject is Chest heldChest)
+        if (e.Button.IsActionButton())
         {
+            if (!ModState.Config.OpenHeldChest || Game1.player.ActiveObject is not Chest heldChest)
+            {
+                return;
+            }
+
             this.Helper.Input.Suppress(e.Button);
             heldChest.ShowMenu();
         }
@@ -68,18 +86,17 @@ internal sealed class ModEntry : Mod
 
     private void OnConfigChanged(ConfigChangedEventArgs<ModConfig> e)
     {
-        this.Helper.Events.GameLoop.OneSecondUpdateTicked -= this.OnOneSecondUpdateTicked;
+        this.Helper.Events.GameLoop.OneSecondUpdateTicked -= OnOneSecondUpdateTicked;
         if (e.Config.SlownessLimit > 0 && e.Config.SlownessAmount != 0)
         {
-            this.Helper.Events.GameLoop.OneSecondUpdateTicked += this.OnOneSecondUpdateTicked;
+            this.Helper.Events.GameLoop.OneSecondUpdateTicked += OnOneSecondUpdateTicked;
         }
     }
 
-    private void OnOneSecondUpdateTicked(object? sender, OneSecondUpdateTickedEventArgs e)
+    private static void OnOneSecondUpdateTicked(object? sender, OneSecondUpdateTickedEventArgs e)
     {
         // Add status effect to the player
-        if (!Game1.player.hasBuff(Constants.SlowEffectKey)
-            && Game1.player.Items.OfType<Chest>().Count() >= this.config.SlownessLimit)
+        if (Game1.player.Items.OfType<Chest>().Count() >= ModState.Config.SlownessLimit)
         {
             Game1.player.applyBuff(
                 new Buff(
@@ -87,33 +104,35 @@ internal sealed class ModEntry : Mod
                     duration: 60_000,
                     iconTexture: Game1.buffsIcons,
                     iconSheetIndex: 13,
-                    effects: new BuffEffects { Speed = { this.config.SlownessAmount } },
+                    effects: new BuffEffects { Speed = { ModState.Config.SlownessAmount } },
                     displayName: I18n.Effect_Overburdened()));
 
             Log.Trace("Adding the slowness effect");
             return;
         }
 
-        // Remove status effect from the player
-        if (Game1.player.hasBuff(Constants.SlowEffectKey))
+        if (!Game1.player.hasBuff(Constants.SlowEffectKey))
         {
-            Game1.player.buffs.Remove(Constants.SlowEffectKey);
-            Log.Trace("Removing the slowness effect");
+            return;
         }
+
+        // Remove status effect from the player
+        Game1.player.buffs.Remove(Constants.SlowEffectKey);
+        Log.Trace("Removing the slowness effect");
     }
 
     private void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
     {
         this.Helper.Events.Input.ButtonPressed -= this.OnButtonPressed;
-        this.Helper.Events.GameLoop.OneSecondUpdateTicked -= this.OnOneSecondUpdateTicked;
+        this.Helper.Events.GameLoop.OneSecondUpdateTicked -= OnOneSecondUpdateTicked;
     }
 
     private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
     {
         this.Helper.Events.Input.ButtonPressed += this.OnButtonPressed;
-        if (this.config.SlownessLimit > 0 && this.config.SlownessAmount != 0)
+        if (ModState.Config.SlownessLimit > 0 && ModState.Config.SlownessAmount != 0)
         {
-            this.Helper.Events.GameLoop.OneSecondUpdateTicked += this.OnOneSecondUpdateTicked;
+            this.Helper.Events.GameLoop.OneSecondUpdateTicked += OnOneSecondUpdateTicked;
         }
     }
 }

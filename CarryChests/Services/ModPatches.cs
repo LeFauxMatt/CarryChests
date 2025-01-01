@@ -6,14 +6,17 @@ using StardewValley.Objects;
 
 namespace LeFauxMods.CarryChest.Services;
 
+/// <summary>Encapsulates mod patches.</summary>
 internal static class ModPatches
 {
     private static readonly Harmony Harmony = new(Constants.ModId);
 
-    public static void Init()
+    public static void Apply()
     {
         try
         {
+            Log.Info("Applying patches");
+
             _ = Harmony.Patch(
                 AccessTools.DeclaredMethod(typeof(Chest), nameof(Chest.addItem)),
                 new HarmonyMethod(typeof(ModPatches), nameof(Chest_addItem_prefix)));
@@ -123,6 +126,7 @@ internal static class ModPatches
         __result = __result > 1 && __instance is Chest ? 1 : __result;
 
     [SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony")]
+    [SuppressMessage("ReSharper", "SuggestBaseTypeForParameter", Justification = "Harmony")]
     private static void Object_placementAction_postfix(
         SObject __instance,
         GameLocation location,
@@ -146,11 +150,10 @@ internal static class ModPatches
             return;
         }
 
-        string id;
         if (__instance is not Chest chest)
         {
             // Attempt to restore Better Chest proxy
-            if (__instance.modData.TryGetValue(Constants.GlobalInventoryKey, out id) &&
+            if (__instance.modData.TryGetValue(Constants.GlobalInventoryKey, out var id) &&
                 Game1.player.team.globalInventories.ContainsKey(id))
             {
                 var color = Color.Black;
