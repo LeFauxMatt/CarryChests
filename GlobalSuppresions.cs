@@ -1,1 +1,0 @@
-FauxCore/GlobalSuppressions.cs

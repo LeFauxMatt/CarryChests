@@ -1,10 +1,14 @@
 {
-  "alert.carry-chest-limit": "Cannot carry any more chests",
-  "config-option.total-limit.name": "Carry Chest Limit",
-  "config-option.total-limit.description": "Limits the number of chests that can be carried at once.",
-  "config-option.slowness-amount.name": "Slowness Amount",
-  "config-option.slowness-amount.description": "The amount of slowness applied when carrying chests above the limit.",
-  "config-option.slowness-limit.name": "Slowness Limit",
-  "config-option.slowness-limit.description": "The number of chests that can be carried before the slowness effect is applied.",
-  "effect.overburdened": "Overburdened"
+  "alert.carry-chest-limit": "Ne peut pas transporter davantage de coffre",
+  "config-option.open-held-chest.name": "Open Held Chests",
+  "config-option.open-held-chest.description": "Allow you to open the currently held chest.",
+  "config-option.override-toool.name": "Override Tool",
+  "config-option.override-tool.description": "Override using a tool on a chest to pick it up.",
+  "config-option.total-limit.name": "Limite de transport de coffre",
+  "config-option.total-limit.description": "Limite le nombre de coffre transportés à la fois.",
+  "config-option.slowness-amount.name": "Montant de ralentissement",
+  "config-option.slowness-amount.description": "Le montant de ralentissement appliqué lors du transport de coffres au-dessus de la limite.",
+  "config-option.slowness-limit.name": "Limite de ralentissement",
+  "config-option.slowness-limit.description": "Le nombre de coffres qui peuvent être transportés avant que l’effet de ralentissement ne s’applique.",
+  "effect.overburdened": "Surchargé (coffres)"
 }
