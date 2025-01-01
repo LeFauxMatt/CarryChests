@@ -10,7 +10,7 @@
 		<EnableHarmony>true</EnableHarmony>
 		<RootNamespace>LeFauxMods.CarryChest</RootNamespace>
 		<UniqueId>furyx639.CarryChest</UniqueId>
-		<UpdateKeys>Nexus:30321, GitHub:LeFauxMatt/CarryChest</UpdateKeys>
+		<UpdateKeys>Nexus:30321, CurseForge:1169557, GitHub:LeFauxMatt/CarryChest</UpdateKeys>
 		<RepositoryUrl>https://github.com/LeFauxMatt/CarryChest</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 	</PropertyGroup>
