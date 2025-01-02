@@ -65,5 +65,12 @@ internal sealed class ConfigMenu
             static value => Config.OverrideTool = value,
             I18n.ConfigOption_OverrideToool_Name,
             I18n.ConfigOption_OverrideTool_Description);
+
+        this.api.AddBoolOption(
+            this.manifest,
+            static () => Config.SwapChests,
+            static value => Config.SwapChests = value,
+            I18n.ConfigOption_SwapChests_Name,
+            I18n.ConfigOption_SwapChests_Description);
     }
 }
