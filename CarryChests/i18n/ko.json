@@ -1,5 +1,12 @@
 {
   "alert.carry-chest-limit": "더 이상 상자를 운반할 수 없습니다.",
+  "alert.command-backup.invalid-context": "Must be in game to show backups.",
+  "command.carry-chests.description": "Type 'carry_chests help' to list available commands.",
+  "command.backups.description": "Open a menu showing backup copies of all carried chests.",
+  "command.help.description": "Commands:",
+  "command.unknown.description": "That is not a valid command.",
+  "config-option.grab-empty-as-item.name": "Grab Empty as Item",
+  "config-option.grab-empty-as-item.description": "Grab empty chests as items so that they are able to stack.",
   "config-option.open-held-chest.name": "Open Held Chests",
   "config-option.open-held-chest.description": "Allow you to open the currently held chest.",
   "config-option.override-toool.name": "Override Tool",
@@ -10,5 +17,7 @@
   "config-option.slowness-amount.description": "한도 이상의 상자를 운반할 때 적용되는 속도 감소량.",
   "config-option.slowness-limit.name": "속도 한도",
   "config-option.slowness-limit.description": "속도 감소 효과가 적용되기 전에 운반할 수 있는 상자의 수",
+  "config-option.swap-chests.name": "Swap Chests",
+  "config-option.swap-chests.description": "Using a chest on a placed chest will combine inventories and swap them.",
   "effect.overburdened": "과부하"
 }

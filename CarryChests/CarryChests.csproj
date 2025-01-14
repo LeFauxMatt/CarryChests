@@ -6,11 +6,11 @@
 	<PropertyGroup>
 		<Name>Carry Chests</Name>
 		<Description>Allows you to pick up placed chests with items.</Description>
-		<Version>1.1.0</Version>
+		<Version>1.2.0</Version>
 		<EnableHarmony>true</EnableHarmony>
 		<RootNamespace>LeFauxMods.CarryChest</RootNamespace>
 		<UniqueId>furyx639.CarryChest</UniqueId>
-		<UpdateKeys>Nexus:30321, CurseForge:1169557, GitHub:LeFauxMatt/CarryChest</UpdateKeys>
+		<UpdateKeys>Nexus:30321, CurseForge:1169557, GitHub:LeFauxMatt/CarryChests</UpdateKeys>
 		<RepositoryUrl>https://github.com/LeFauxMatt/CarryChest</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 	</PropertyGroup>
