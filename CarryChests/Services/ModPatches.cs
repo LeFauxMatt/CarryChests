@@ -2,6 +2,7 @@ using HarmonyLib;
 using LeFauxMods.Common.Utilities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using StardewValley.Menus;
 using StardewValley.Objects;
 
 namespace LeFauxMods.CarryChest.Services;
@@ -20,6 +21,10 @@ internal static class ModPatches
             _ = Harmony.Patch(
                 AccessTools.DeclaredMethod(typeof(Chest), nameof(Chest.addItem)),
                 new HarmonyMethod(typeof(ModPatches), nameof(Chest_addItem_prefix)));
+
+            _ = Harmony.Patch(
+                AccessTools.DeclaredMethod(typeof(InventoryMenu), nameof(InventoryMenu.rightClick)),
+                transpiler: new HarmonyMethod(typeof(ModPatches), nameof(InventoryMenu_rightClick_transpiler)));
 
             _ = Harmony.Patch(
                 AccessTools.DeclaredMethod(typeof(Item), nameof(Item.canBeDropped)),
@@ -55,7 +60,6 @@ internal static class ModPatches
         }
     }
 
-
     [SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony")]
     private static bool Chest_addItem_prefix(Chest __instance, ref Item __result, Item item)
     {
@@ -67,6 +71,22 @@ internal static class ModPatches
         __result = item;
         return false;
     }
+
+    private static IEnumerable<CodeInstruction>
+        InventoryMenu_rightClick_transpiler(IEnumerable<CodeInstruction> instructions) =>
+        new CodeMatcher(instructions)
+            .MatchEndForward(new CodeMatch(CodeInstruction.LoadField(typeof(InventoryMenu),
+                nameof(InventoryMenu.highlightMethod))))
+            .Repeat(static matcher =>
+                matcher
+                    .Advance(1)
+                    .InsertAndAdvance(
+                        CodeInstruction.Call(typeof(ModPatches), nameof(HighlightMethod))))
+            .InstructionEnumeration();
+
+    private static InventoryMenu.highlightThisItem HighlightMethod(InventoryMenu.highlightThisItem highlightMethod) =>
+        item =>
+            highlightMethod.Invoke(item) && item is not Chest;
 
     [SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony")]
     private static void Item_canBeDropped_postfix(Item __instance, ref bool __result) =>
@@ -101,9 +121,9 @@ internal static class ModPatches
         }
 
         var position = location
-                       + new Vector2(
-                           Game1.tileSize - Utility.getWidthOfTinyDigitString(items, 3f * scaleSize) - (3f * scaleSize),
-                           2f * scaleSize);
+            + new Vector2(
+                Game1.tileSize - Utility.getWidthOfTinyDigitString(items, 3f * scaleSize) - (3f * scaleSize),
+                2f * scaleSize);
 
         Utility.drawTinyDigits(items, spriteBatch, position, 3f * scaleSize, 1f, color);
     }
@@ -135,55 +155,18 @@ internal static class ModPatches
         Farmer who,
         ref bool __result)
     {
-        if (!__result)
+        if (!__result || __instance is not Chest chest)
         {
             return;
         }
 
         var placementTile = new Vector2((int)(x / (float)Game1.tileSize), (int)(y / (float)Game1.tileSize));
-
         if (!location.Objects.TryGetValue(
                 new Vector2((int)(x / (float)Game1.tileSize), (int)(y / (float)Game1.tileSize)),
                 out var placedObject)
-            || placedObject is not Chest placedChest)
+            || placedObject is not Chest)
         {
             return;
-        }
-
-        if (__instance is not Chest chest)
-        {
-            // Attempt to restore Better Chest proxy
-            if (__instance.modData.TryGetValue(Constants.GlobalInventoryKey, out var id) &&
-                Game1.player.team.globalInventories.ContainsKey(id))
-            {
-                var color = Color.Black;
-                if (__instance.modData.TryGetValue(Constants.ColorKey, out var colorString) &&
-                    int.TryParse(colorString, out var colorValue))
-                {
-                    var r = (byte)(colorValue & 0xFF);
-                    var g = (byte)((colorValue >> 8) & 0xFF);
-                    var b = (byte)((colorValue >> 16) & 0xFF);
-                    color = new Color(r, g, b);
-                }
-
-                chest = placedChest;
-                chest.GlobalInventoryId = id;
-                chest.playerChoiceColor.Value = color;
-                chest.fridge.Value = __instance.modData.ContainsKey(Constants.FridgeKey);
-
-                foreach (var (key, value) in __instance.modData.Pairs)
-                {
-                    chest.modData[key] = value;
-                }
-
-                chest.modData.Remove(Constants.FridgeKey);
-                chest.modData.Remove(Constants.ColorKey);
-                chest.modData.Remove(Constants.GlobalInventoryKey);
-            }
-            else
-            {
-                return;
-            }
         }
 
         location.Objects[placementTile] = chest;
@@ -193,13 +176,17 @@ internal static class ModPatches
         who.removeItemFromInventory(who.CurrentItem);
         who.showNotCarrying();
 
-        // Move items from temporary global inventory back to chest
-        if (string.IsNullOrWhiteSpace(chest.GlobalInventoryId) ||
-            !chest.GlobalInventoryId.StartsWith(Constants.Prefix, StringComparison.OrdinalIgnoreCase))
+        // Remove backup
+        if (ModState.Backups.TryGetBackup(chest, out var backup))
         {
-            return;
+            _ = ModState.Backups.Remove(backup);
         }
 
-        chest.ToLocalInventory();
+        // Move items from temporary global inventory back to chest
+        if (!string.IsNullOrWhiteSpace(chest.GlobalInventoryId) &&
+            chest.GlobalInventoryId.StartsWith(Constants.Prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            chest.ToLocalInventory();
+        }
     }
 }

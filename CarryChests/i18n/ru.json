@@ -1,5 +1,12 @@
 {
   "alert.carry-chest-limit": "Невозможно нести больше сундуков",
+  "alert.command-backup.invalid-context": "Must be in game to show backups.",
+  "command.carry-chests.description": "Type 'carry_chests help' to list available commands.",
+  "command.backups.description": "Open a menu showing backup copies of all carried chests.",
+  "command.help.description": "Lists all available commands.",
+  "command.unknown.description": "That is not a valid command.",
+  "config-option.grab-empty-as-item.name": "Grab Empty as Item",
+  "config-option.grab-empty-as-item.description": "Grab empty chests as items so that they are able to stack.",
   "config-option.open-held-chest.name": "Открыть переносимый сундук",
   "config-option.open-held-chest.description": "Позволяет открывать сундук, который вы держите в руках.",
   "config-option.override-toool.name": "Замена инструмента",
@@ -10,5 +17,7 @@
   "config-option.slowness-amount.description": "Уровень замедления, применяемый при переноске сундуков сверх лимита.",
   "config-option.slowness-limit.name": "Лимит замедления",
   "config-option.slowness-limit.description": "Количество сундуков, которые можно переносить до применения эффекта замедления.",
+  "config-option.swap-chests.name": "Swap Chests",
+  "config-option.swap-chests.description": "Using a chest on a placed chest will combine inventories and swap them.",
   "effect.overburdened": "Перегруженность"
 }

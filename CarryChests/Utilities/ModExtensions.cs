@@ -1,15 +1,17 @@
+using LeFauxMods.CarryChest.Services;
 using LeFauxMods.Common.Utilities;
 using Microsoft.Xna.Framework;
 using StardewValley.Objects;
 
 namespace LeFauxMods.CarryChest.Utilities;
 
-internal static class InventoryHelper
+internal static class ModExtensions
 {
-    public static bool PickUpChest(Chest chest, int limit)
+    public static bool TryCarry(this Chest chest)
     {
         // Grab as item
-        if (chest.GetItemsForPlayer().CountItemStacks() == 0
+        if (ModState.Config.GrabEmptyAsItem
+            && chest.GetItemsForPlayer().CountItemStacks() == 0
             && Game1.player.addItemToInventoryBool(ItemRegistry.Create(chest.QualifiedItemId)))
         {
             Log.Trace(
@@ -22,8 +24,8 @@ internal static class InventoryHelper
         }
 
         // Grab as chest
-        if ((limit > 0
-             && Game1.player.Items.OfType<Chest>().Count() >= limit)
+        if ((ModState.Config.TotalLimit > 0
+                && Game1.player.Items.OfType<Chest>().Count() >= ModState.Config.TotalLimit)
             || !Game1.player.addItemToInventoryBool(chest, true))
         {
             return false;
@@ -35,24 +37,15 @@ internal static class InventoryHelper
             chest.TileLocation.X,
             chest.TileLocation.Y);
 
-        if (!string.IsNullOrWhiteSpace(chest.GlobalInventoryId))
-        {
-            return true;
-        }
-
-        var temporaryId = CommonHelper.GetUniqueId(Constants.Prefix);
-        chest.ToGlobalInventory(temporaryId);
+        // Copy a backup for safety
+        _ = ModState.Backups.TryAddBackup(chest, Constants.Prefix);
         return true;
     }
 
-    public static bool SwapChest(Chest chest)
+    public static bool TrySwap(this Chest chest)
     {
-        if (!chest.performObjectDropInAction(Game1.player.CurrentItem, true, Game1.player))
-        {
-            return false;
-        }
-
-        if (Game1.player.CurrentItem is not Chest heldChest)
+        if (!chest.performObjectDropInAction(Game1.player.CurrentItem, true, Game1.player) ||
+            Game1.player.CurrentItem is not Chest heldChest)
         {
             return false;
         }
@@ -63,7 +56,16 @@ internal static class InventoryHelper
             return true;
         }
 
-        var newChest = new Chest(true, chest.TileLocation, heldChest.ItemId);
+        var newChest = new Chest(true, chest.TileLocation, heldChest.ItemId)
+        {
+            GlobalInventoryId = chest.GlobalInventoryId,
+            fridge = { Value = chest.fridge.Value },
+            playerChoiceColor = { Value = chest.playerChoiceColor.Value },
+            SpecialChestType = chest.SpecialChestType,
+            Tint = chest.Tint
+        };
+
+        newChest.CopyFieldsFrom(chest);
 
         // Try adding held items to new chest
         foreach (var item in heldChest.GetItemsForPlayer())
@@ -75,7 +77,7 @@ internal static class InventoryHelper
             }
         }
 
-        // Try adding exiting items to new chest
+        // Try adding existing items to new chest
         foreach (var item in chest.GetItemsForPlayer())
         {
             var remaining = newChest.addItem(item);
@@ -84,10 +86,6 @@ internal static class InventoryHelper
                 return true;
             }
         }
-
-        newChest.playerChoiceColor.Value = chest.playerChoiceColor.Value;
-        newChest.Tint = chest.Tint;
-        newChest.modData.CopyFrom(chest.modData);
 
         var location = chest.Location;
         var tileLocation = chest.TileLocation;
