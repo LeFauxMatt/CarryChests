@@ -1,8 +1,7 @@
-using System.Globalization;
-using System.Text;
 using LeFauxMods.CarryChest.Services;
 using LeFauxMods.CarryChest.Utilities;
 using LeFauxMods.Common.Models;
+using LeFauxMods.Common.Services;
 using LeFauxMods.Common.Utilities;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI.Events;
@@ -15,6 +14,8 @@ namespace LeFauxMods.CarryChest;
 /// <inheritdoc />
 internal sealed class ModEntry : Mod
 {
+    private CommandHelper commandHelper = null!;
+
     /// <inheritdoc />
     public override void Entry(IModHelper helper)
     {
@@ -25,64 +26,20 @@ internal sealed class ModEntry : Mod
         Log.Init(this.Monitor, ModState.Config);
         ModPatches.Apply();
 
-        // TBD: Command to access global inventory chests
-        helper.ConsoleCommands.Add("carry_chests", I18n.Command_CarryChests_Description(), OnCommand);
+        // Commands
+        this.commandHelper = new CommandHelper(
+                helper,
+                "carry_chests",
+                I18n.Command_CarryChests_Description,
+                I18n.Command_Unknown_Description)
+            .AddCommand("help", I18n.Command_Help_Description)
+            .AddCommand("backup", I18n.Command_Backups_Description);
 
         // Events
         helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
         helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
         helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
-    }
-
-    private static void OnCommand(string arg1, string[] arg2)
-    {
-        switch (arg2.ElementAtOrDefault(0)?.ToLower(CultureInfo.InvariantCulture))
-        {
-            case "backup" when !Context.IsWorldReady:
-                Log.Info(I18n.Alert_CommandBackup_InvalidContext());
-                return;
-
-            case "backup":
-                Game1.activeClickableMenu = new ItemGrabMenu(ModState.Backups);
-                return;
-
-            case "help":
-                switch (arg2.ElementAtOrDefault(1)?.ToLower(CultureInfo.InvariantCulture))
-                {
-                    case "backup":
-                        Log.Info(I18n.Command_Backups_Description());
-                        return;
-
-                    case "help":
-                        Log.Info(I18n.Command_Help_Description());
-                        return;
-
-                    case null:
-                        Log.Info(
-                            new StringBuilder()
-                                .AppendLine("Commands:")
-                                .AppendLine()
-                                .AppendLine("carry_chests backup")
-                                .AppendLine(CultureInfo.InvariantCulture, $"\t{I18n.Command_Backups_Description()}")
-                                .AppendLine()
-                                .AppendLine("carry_chests help")
-                                .AppendLine(CultureInfo.InvariantCulture, $"\t{I18n.Command_Help_Description()}")
-                                .ToString());
-                        return;
-
-                    default:
-                        Log.Info(I18n.Command_Unknown_Description());
-                        return;
-                }
-
-            case null:
-                Log.Info(I18n.Command_CarryChests_Description());
-                return;
-
-            default:
-                Log.Info(I18n.Command_Unknown_Description());
-                return;
-        }
+        ModEvents.Subscribe<CommandReceivedEventArgs>(this.OnCommandReceived);
     }
 
     private static void OnOneSecondUpdateTicked(object? sender, OneSecondUpdateTickedEventArgs e)
@@ -111,6 +68,22 @@ internal sealed class ModEntry : Mod
         // Remove status effect from the player
         Game1.player.buffs.Remove(Constants.SlowEffectKey);
         Log.Trace("Removing the slowness effect");
+    }
+
+    private void OnCommandReceived(CommandReceivedEventArgs e)
+    {
+        switch (e.Command)
+        {
+            case "help":
+                Log.Info(this.commandHelper.HelpText);
+                return;
+            case "backup" when !Context.IsWorldReady:
+                Log.Warn(I18n.Alert_CommandBackup_InvalidContext());
+                return;
+            case "backup":
+                Game1.activeClickableMenu = new ItemGrabMenu(ModState.Backups);
+                return;
+        }
     }
 
     private void OnGameLaunched(object? sender, GameLaunchedEventArgs e) =>
@@ -237,7 +210,7 @@ internal sealed class ModEntry : Mod
         {
             // Only create backups for known ids
             if (!id.StartsWith(Constants.Prefix, StringComparison.OrdinalIgnoreCase) &&
-                !id.StartsWith("furyx639.BetterChests-ProxyChestFactory-", StringComparison.OrdinalIgnoreCase))
+                !id.StartsWith(Constants.BetterChestsPrefix, StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }

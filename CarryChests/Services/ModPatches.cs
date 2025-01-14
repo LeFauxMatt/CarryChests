@@ -147,6 +147,7 @@ internal static class ModPatches
 
     [SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony")]
     [SuppressMessage("ReSharper", "SuggestBaseTypeForParameter", Justification = "Harmony")]
+    [HarmonyAfter("furyx639.ExpandedStorage")]
     private static void Object_placementAction_postfix(
         SObject __instance,
         GameLocation location,
