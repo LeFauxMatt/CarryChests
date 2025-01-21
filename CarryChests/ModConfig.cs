@@ -6,7 +6,7 @@ using LeFauxMods.Common.Models;
 namespace LeFauxMods.CarryChest;
 
 /// <inheritdoc cref="IModConfig{TConfig}" />
-internal class ModConfig : IModConfig<ModConfig>, IConfigWithLogAmount
+internal sealed class ModConfig : IModConfig<ModConfig>, IConfigWithLogAmount
 {
     /// <summary>Gets or sets a value indicating whether held chests can be opened.</summary>
     public bool OpenHeldChest { get; set; } = true;
@@ -45,6 +45,7 @@ internal class ModConfig : IModConfig<ModConfig>, IConfigWithLogAmount
         other.TotalLimit = this.TotalLimit;
     }
 
+    /// <inheritdoc />
     public string GetSummary() =>
         new StringBuilder()
             .AppendLine(CultureInfo.InvariantCulture, $"{nameof(this.GrabEmptyAsItem),25}: {this.GrabEmptyAsItem}")

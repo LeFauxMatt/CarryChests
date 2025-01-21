@@ -19,7 +19,7 @@ internal sealed class ModEntry : Mod
     /// <inheritdoc />
     public override void Entry(IModHelper helper)
     {
-        // Apply
+        // Init
         ModEvents.Subscribe<ConfigChangedEventArgs<ModConfig>>(this.OnConfigChanged);
         I18n.Init(helper.Translation);
         ModState.Init(helper);
@@ -83,6 +83,9 @@ internal sealed class ModEntry : Mod
             case "backup":
                 Game1.activeClickableMenu = new ItemGrabMenu(ModState.Backups);
                 return;
+            default:
+                Log.Warn(I18n.Command_Unknown_Description());
+                break;
         }
     }
 
@@ -91,12 +94,7 @@ internal sealed class ModEntry : Mod
 
     private void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
     {
-        if (!Context.IsPlayerFree)
-        {
-            return;
-        }
-
-        if (e.Button.IsUseToolButton())
+        if (e.Button.IsUseToolButton() && Context.IsPlayerFree)
         {
             if (Game1.player.CurrentItem is Tool && !ModState.Config.OverrideTool)
             {
@@ -129,16 +127,47 @@ internal sealed class ModEntry : Mod
             return;
         }
 
-        if (e.Button.IsActionButton())
+        if (!e.Button.IsActionButton() || !ModState.Config.OpenHeldChest)
         {
-            if (!ModState.Config.OpenHeldChest || Game1.player.ActiveObject is not Chest heldChest)
+            return;
+        }
+
+        if (Context.IsPlayerFree && Game1.player.ActiveObject is Chest heldChest)
+        {
+            this.Helper.Input.Suppress(e.Button);
+            heldChest.ShowMenu();
+            return;
+        }
+
+        Game1.InUIMode(() =>
+        {
+            var (mouseX, mouseY) = e.Cursor.GetScaledScreenPixels().ToPoint();
+            var inventoryMenu = Game1.activeClickableMenu switch
+            {
+                ItemGrabMenu { ItemsToGrabMenu: { } itemsToGrabMenu } when itemsToGrabMenu.isWithinBounds(mouseX,
+                    mouseY) => itemsToGrabMenu,
+                ItemGrabMenu { inventory: { } inventory } when inventory.isWithinBounds(mouseX, mouseY) =>
+                    inventory,
+                GameMenu gameMenu when gameMenu.GetCurrentPage() is InventoryPage { inventory: { } inventory } &&
+                    inventory.isWithinBounds(mouseX, mouseY) => inventory,
+                _ => null
+            };
+
+            if (inventoryMenu is not { inventory: { } slots, actualInventory: { } items })
+            {
+                return;
+            }
+
+            var slot = slots.FirstOrDefault(slot => slot.containsPoint(mouseX, mouseY));
+            if (slot is null || !int.TryParse(slot.name, out var index) ||
+                items[index] is not Chest chest)
             {
                 return;
             }
 
             this.Helper.Input.Suppress(e.Button);
-            heldChest.ShowMenu();
-        }
+            chest.ShowMenu();
+        });
     }
 
     private void OnConfigChanged(ConfigChangedEventArgs<ModConfig> e)
