@@ -47,6 +47,10 @@ internal static class ModPatches
                 new HarmonyMethod(typeof(ModPatches), nameof(Object_drawWhenHeld_prefix)));
 
             _ = Harmony.Patch(
+                AccessTools.DeclaredPropertyGetter(typeof(SObject), nameof(SObject.Location)),
+                postfix: new HarmonyMethod(typeof(ModPatches), nameof(Object_Location_postfix)));
+
+            _ = Harmony.Patch(
                 AccessTools.DeclaredMethod(typeof(SObject), nameof(SObject.maximumStackSize)),
                 postfix: new HarmonyMethod(typeof(ModPatches), nameof(Object_maximumStackSize_postfix)));
 
@@ -188,6 +192,15 @@ internal static class ModPatches
             chest.GlobalInventoryId.StartsWith(Constants.Prefix, StringComparison.OrdinalIgnoreCase))
         {
             chest.ToLocalInventory();
+        }
+    }
+
+    [SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony")]
+    private static void Object_Location_postfix(SObject __instance, ref GameLocation __result)
+    {
+        if (__instance is Chest)
+        {
+            __result ??= Game1.player.currentLocation;
         }
     }
 }
