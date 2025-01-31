@@ -24,9 +24,9 @@ internal static class ModExtensions
         }
 
         // Grab as chest
-        if ((ModState.Config.TotalLimit > 0
-                && Game1.player.Items.OfType<Chest>().Count() >= ModState.Config.TotalLimit)
-            || !Game1.player.addItemToInventoryBool(chest, true))
+        if ((ModState.Config.TotalLimit <= 0
+             || Game1.player.Items.OfType<Chest>().Count() < ModState.Config.TotalLimit)
+            && !Game1.player.addItemToInventoryBool(chest, true))
         {
             return false;
         }
@@ -38,7 +38,7 @@ internal static class ModExtensions
             chest.TileLocation.Y);
 
         // Copy a backup for safety
-        _ = ModState.Backups.TryAddBackup(chest, Constants.Prefix);
+        _ = ModState.Backups.TryAddBackup(chest, ModConstants.Prefix);
         return true;
     }
 

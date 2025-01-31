@@ -10,7 +10,7 @@ namespace LeFauxMods.CarryChest.Services;
 /// <summary>Encapsulates mod patches.</summary>
 internal static class ModPatches
 {
-    private static readonly Harmony Harmony = new(Constants.ModId);
+    private static readonly Harmony Harmony = new(ModConstants.ModId);
 
     public static void Apply()
     {
@@ -125,9 +125,9 @@ internal static class ModPatches
         }
 
         var position = location
-            + new Vector2(
-                Game1.tileSize - Utility.getWidthOfTinyDigitString(items, 3f * scaleSize) - (3f * scaleSize),
-                2f * scaleSize);
+                       + new Vector2(
+                           Game1.tileSize - Utility.getWidthOfTinyDigitString(items, 3f * scaleSize) - (3f * scaleSize),
+                           2f * scaleSize);
 
         Utility.drawTinyDigits(items, spriteBatch, position, 3f * scaleSize, 1f, color);
     }
@@ -166,18 +166,18 @@ internal static class ModPatches
         }
 
         var placementTile = new Vector2((int)(x / (float)Game1.tileSize), (int)(y / (float)Game1.tileSize));
-        if (!location.Objects.TryGetValue(
-                new Vector2((int)(x / (float)Game1.tileSize), (int)(y / (float)Game1.tileSize)),
-                out var placedObject)
-            || placedObject is not Chest)
+        if (!location.Objects.TryGetValue(placementTile, out var placedObject)
+            || placedObject is not Chest placedChest)
         {
             return;
         }
 
-        location.Objects[placementTile] = chest;
-        chest.localKickStartTile = null;
-        chest.kickProgress = -1f;
-        chest.shakeTimer = 50;
+        placedChest.CopyFieldsFrom(chest);
+        placedChest.fridge.Value = chest.fridge.Value;
+        placedChest.playerChoiceColor.Value = chest.playerChoiceColor.Value;
+        placedChest.SpecialChestType = chest.SpecialChestType;
+        placedChest.Tint = chest.Tint;
+        placedChest.GlobalInventoryId = chest.GlobalInventoryId;
         who.removeItemFromInventory(who.CurrentItem);
         who.showNotCarrying();
 
@@ -188,10 +188,10 @@ internal static class ModPatches
         }
 
         // Move items from temporary global inventory back to chest
-        if (!string.IsNullOrWhiteSpace(chest.GlobalInventoryId) &&
-            chest.GlobalInventoryId.StartsWith(Constants.Prefix, StringComparison.OrdinalIgnoreCase))
+        if (!string.IsNullOrWhiteSpace(placedChest.GlobalInventoryId) &&
+            placedChest.GlobalInventoryId.StartsWith(ModConstants.Prefix, StringComparison.OrdinalIgnoreCase))
         {
-            chest.ToLocalInventory();
+            placedChest.ToLocalInventory();
         }
     }
 

@@ -49,7 +49,7 @@ internal sealed class ModEntry : Mod
         {
             Game1.player.applyBuff(
                 new Buff(
-                    Constants.SlowEffectKey,
+                    ModConstants.SlowEffectKey,
                     duration: 60_000,
                     iconTexture: Game1.buffsIcons,
                     iconSheetIndex: 13,
@@ -60,13 +60,13 @@ internal sealed class ModEntry : Mod
             return;
         }
 
-        if (!Game1.player.hasBuff(Constants.SlowEffectKey))
+        if (!Game1.player.hasBuff(ModConstants.SlowEffectKey))
         {
             return;
         }
 
         // Remove status effect from the player
-        Game1.player.buffs.Remove(Constants.SlowEffectKey);
+        Game1.player.buffs.Remove(ModConstants.SlowEffectKey);
         Log.Trace("Removing the slowness effect");
     }
 
@@ -149,7 +149,7 @@ internal sealed class ModEntry : Mod
                 ItemGrabMenu { inventory: { } inventory } when inventory.isWithinBounds(mouseX, mouseY) =>
                     inventory,
                 GameMenu gameMenu when gameMenu.GetCurrentPage() is InventoryPage { inventory: { } inventory } &&
-                    inventory.isWithinBounds(mouseX, mouseY) => inventory,
+                                       inventory.isWithinBounds(mouseX, mouseY) => inventory,
                 _ => null
             };
 
@@ -200,7 +200,7 @@ internal sealed class ModEntry : Mod
             if (item is not Chest chest)
             {
                 if (item is null ||
-                    !item.modData.TryGetValue(Constants.BetterChestsGlobalInventoryKey, out var id) ||
+                    !item.modData.TryGetValue(ModConstants.BetterChestsGlobalInventoryKey, out var id) ||
                     !Game1.player.team.globalInventories.ContainsKey(id))
                 {
                     continue;
@@ -208,7 +208,7 @@ internal sealed class ModEntry : Mod
 
                 // Attempt to restore a Better Chest proxy
                 var color = Color.Black;
-                if (item.modData.TryGetValue(Constants.BetterChestsColorKey, out var colorString) &&
+                if (item.modData.TryGetValue(ModConstants.BetterChestsColorKey, out var colorString) &&
                     int.TryParse(colorString, out var colorValue))
                 {
                     var r = (byte)(colorValue & 0xFF);
@@ -220,26 +220,26 @@ internal sealed class ModEntry : Mod
                 chest = new Chest(true, item.ItemId)
                 {
                     GlobalInventoryId = id,
-                    fridge = { Value = item.modData.ContainsKey(Constants.BetterChestsFridgeKey) },
+                    fridge = { Value = item.modData.ContainsKey(ModConstants.BetterChestsFridgeKey) },
                     playerChoiceColor = { Value = color }
                 };
 
                 chest.CopyFieldsFrom(item);
-                _ = chest.modData.Remove(Constants.BetterChestsFridgeKey);
-                _ = chest.modData.Remove(Constants.BetterChestsColorKey);
-                _ = chest.modData.Remove(Constants.BetterChestsGlobalInventoryKey);
+                _ = chest.modData.Remove(ModConstants.BetterChestsFridgeKey);
+                _ = chest.modData.Remove(ModConstants.BetterChestsColorKey);
+                _ = chest.modData.Remove(ModConstants.BetterChestsGlobalInventoryKey);
                 Game1.player.Items[i] = chest;
             }
 
-            _ = ModState.Backups.TryAddBackup(chest, Constants.Prefix);
+            _ = ModState.Backups.TryAddBackup(chest, ModConstants.Prefix);
         }
 
         // Create generic backups for any missing
         foreach (var (id, _) in Game1.player.team.globalInventories.Pairs)
         {
             // Only create backups for known ids
-            if (!id.StartsWith(Constants.Prefix, StringComparison.OrdinalIgnoreCase) &&
-                !id.StartsWith(Constants.BetterChestsPrefix, StringComparison.OrdinalIgnoreCase))
+            if (!id.StartsWith(ModConstants.Prefix, StringComparison.OrdinalIgnoreCase) &&
+                !id.StartsWith(ModConstants.BetterChestsPrefix, StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }

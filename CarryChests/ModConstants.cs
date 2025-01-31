@@ -1,6 +1,6 @@
 namespace LeFauxMods.CarryChest;
 
-internal static class Constants
+internal static class ModConstants
 {
     public const string BetterChestsColorKey = BetterChestsPrefix + "PlayerChoiceColor";
 

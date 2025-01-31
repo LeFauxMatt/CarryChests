@@ -23,7 +23,7 @@ internal sealed class ModState
     }
 
     public static Inventory Backups => Instance!.backups ??=
-        Game1.player.team.GetOrCreateGlobalInventory(Constants.GlobalInventoryId);
+        Game1.player.team.GetOrCreateGlobalInventory(ModConstants.GlobalInventoryId);
 
     public static ModConfig Config => Instance!.configHelper.Config;
 
