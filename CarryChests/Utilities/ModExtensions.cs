@@ -25,7 +25,7 @@ internal static class ModExtensions
 
         // Grab as chest
         if ((ModState.Config.TotalLimit > 0
-                && Game1.player.Items.OfType<Chest>().Count() >= ModState.Config.TotalLimit)
+             && Game1.player.Items.OfType<Chest>().Count() >= ModState.Config.TotalLimit)
             || !Game1.player.addItemToInventoryBool(chest, true))
         {
             return false;

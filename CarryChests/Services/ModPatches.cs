@@ -141,7 +141,16 @@ internal static class ModPatches
         }
 
         var (x, y) = objectPosition;
+        if (ModState.FrameCounter == 0)
+        {
+            chest.draw(spriteBatch, (int)x, (int)y + Game1.tileSize, 1f, true);
+            return false;
+        }
+
+        var currentLidFrame = ModState.StartingLidFrame + Math.Min(++ModState.FrameCounter / 5, ModState.LastLidFrame);
+        ModState.CurrentLidFrame.SetValue(chest, currentLidFrame);
         chest.draw(spriteBatch, (int)x, (int)y + Game1.tileSize, 1f, true);
+        ModState.CurrentLidFrame.SetValue(chest, ModState.StartingLidFrame);
         return false;
     }
 
