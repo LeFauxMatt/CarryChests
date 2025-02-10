@@ -1,76 +1,83 @@
-using LeFauxMods.Common.Integrations.GenericModConfigMenu;
 using LeFauxMods.Common.Services;
 
 namespace LeFauxMods.CarryChest.Services;
 
-/// <summary>Responsible for handling the mod configuration menu.</summary>
-internal sealed class ConfigMenu
+/// <inheritdoc />
+internal sealed class ConfigMenu(IModHelper helper, IManifest manifest)
+    : BaseConfigMenu<ModConfig>(helper, manifest)
 {
-    private readonly IGenericModConfigMenuApi api = null!;
-    private readonly GenericModConfigMenuIntegration gmcm;
-    private readonly IManifest manifest;
+    /// <inheritdoc />
+    protected override ModConfig Config => ModState.ConfigHelper.Temp;
 
-    public ConfigMenu(IModHelper helper, IManifest manifest)
+    /// <inheritdoc />
+    protected override ConfigHelper<ModConfig> ConfigHelper => ModState.ConfigHelper;
+
+    /// <inheritdoc />
+    protected internal override void SetupOptions()
     {
-        this.manifest = manifest;
-        this.gmcm = new GenericModConfigMenuIntegration(manifest, helper.ModRegistry);
-        if (!this.gmcm.IsLoaded)
-        {
-            return;
-        }
+        this.Api.AddBoolOption(
+            this.Manifest,
+            () => this.Config.Enabled,
+            value => this.Config.Enabled = value,
+            I18n.ConfigOption_Enabled_Name,
+            I18n.ConfigOption_Enabled_Description);
 
-        this.api = this.gmcm.Api;
-        this.SetupMenu();
-    }
+        this.Api.AddNumberOption(
+            this.Manifest,
+            () => this.Config.MaximumReach,
+            value => this.Config.MaximumReach = value,
+            I18n.ConfigOption_MaximumReach_Name,
+            I18n.ConfigOption_MaximumReach_Description,
+            1,
+            16);
 
-    private static ModConfig Config => ModState.ConfigHelper.Temp;
-
-    private static ConfigHelper<ModConfig> ConfigHelper => ModState.ConfigHelper;
-
-    private void SetupMenu()
-    {
-        this.gmcm.Register(ConfigHelper.Reset, ConfigHelper.Save);
-
-        this.api.AddNumberOption(
-            this.manifest,
-            static () => Config.TotalLimit,
-            static value => Config.TotalLimit = value,
+        this.Api.AddNumberOption(
+            this.Manifest,
+            () => this.Config.TotalLimit,
+            value => this.Config.TotalLimit = value,
             I18n.ConfigOption_TotalLimit_Name,
             I18n.ConfigOption_TotalLimit_Description);
 
-        this.api.AddNumberOption(
-            this.manifest,
-            static () => Config.SlownessAmount,
-            static value => Config.SlownessAmount = value,
+        this.Api.AddNumberOption(
+            this.Manifest,
+            () => this.Config.SlownessAmount,
+            value => this.Config.SlownessAmount = value,
             I18n.ConfigOption_SlownessAmount_Name,
             I18n.ConfigOption_SlownessAmount_Description);
 
-        this.api.AddNumberOption(
-            this.manifest,
-            static () => Config.SlownessLimit,
-            static value => Config.SlownessLimit = value,
+        this.Api.AddNumberOption(
+            this.Manifest,
+            () => this.Config.SlownessLimit,
+            value => this.Config.SlownessLimit = value,
             I18n.ConfigOption_SlownessLimit_Name,
             I18n.ConfigOption_SlownessLimit_Description);
 
-        this.api.AddBoolOption(
-            this.manifest,
-            static () => Config.OpenHeldChest,
-            static value => Config.OpenHeldChest = value,
+        this.Api.AddBoolOption(
+            this.Manifest,
+            () => this.Config.OpenHeldChest,
+            value => this.Config.OpenHeldChest = value,
             I18n.ConfigOption_OpenHeldChest_Name,
             I18n.ConfigOption_OpenHeldChest_Description);
 
-        this.api.AddBoolOption(
-            this.manifest,
-            static () => Config.OverrideTool,
-            static value => Config.OverrideTool = value,
+        this.Api.AddBoolOption(
+            this.Manifest,
+            () => this.Config.OverrideTool,
+            value => this.Config.OverrideTool = value,
             I18n.ConfigOption_OverrideToool_Name,
             I18n.ConfigOption_OverrideTool_Description);
 
-        this.api.AddBoolOption(
-            this.manifest,
-            static () => Config.SwapChests,
-            static value => Config.SwapChests = value,
+        this.Api.AddBoolOption(
+            this.Manifest,
+            () => this.Config.SwapChests,
+            value => this.Config.SwapChests = value,
             I18n.ConfigOption_SwapChests_Name,
             I18n.ConfigOption_SwapChests_Description);
+
+        this.Api.AddKeybindList(
+            this.Manifest,
+            () => this.Config.ToggleEnabled,
+            value => this.Config.ToggleEnabled = value,
+            I18n.ConfigOption_ToggleEnabled_Name,
+            I18n.ConfigOption_ToggleEnabled_Description);
     }
 }

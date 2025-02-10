@@ -1,8 +1,9 @@
+using System.Reflection;
+using HarmonyLib;
 using LeFauxMods.Common.Services;
-using LeFauxMods.Common.Utilities;
 using StardewModdingAPI.Events;
+using StardewModdingAPI.Utilities;
 using StardewValley.Inventories;
-using StardewValley.Menus;
 using StardewValley.Objects;
 
 namespace LeFauxMods.CarryChest.Services;
@@ -10,15 +11,17 @@ namespace LeFauxMods.CarryChest.Services;
 internal sealed class ModState
 {
     private static ModState? Instance;
-
     private readonly ConfigHelper<ModConfig> configHelper;
-
+    private readonly PerScreen<int> frameCounter = new();
+    private readonly FieldInfo currentLidFrame;
+    private readonly PerScreen<int> lastLidFrame = new();
+    private readonly PerScreen<int> startingLidFrame = new();
     private Inventory? backups;
 
     private ModState(IModHelper helper)
     {
         this.configHelper = new ConfigHelper<ModConfig>(helper);
-        helper.Events.Display.MenuChanged += OnMenuChanged;
+        this.currentLidFrame = AccessTools.Field(typeof(Chest), "currentLidFrame");
         helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
     }
 
@@ -29,18 +32,27 @@ internal sealed class ModState
 
     public static ConfigHelper<ModConfig> ConfigHelper => Instance!.configHelper;
 
-    public static void Init(IModHelper helper) => Instance ??= new ModState(helper);
+    public static FieldInfo CurrentLidFrame => Instance!.currentLidFrame;
 
-    private static void OnMenuChanged(object? sender, MenuChangedEventArgs e)
+    public static int FrameCounter
     {
-        if (e.OldMenu is not ItemGrabMenu { sourceItem: Chest { playerChest.Value: true } chest })
-        {
-            return;
-        }
-
-        Backups.SyncBackup(chest);
-        Backups.RemoveEmptySlots();
+        get => Instance!.frameCounter.Value;
+        set => Instance!.frameCounter.Value = value;
     }
+
+    public static int LastLidFrame
+    {
+        get => Instance!.lastLidFrame.Value;
+        set => Instance!.lastLidFrame.Value = value;
+    }
+
+    public static int StartingLidFrame
+    {
+        get => Instance!.startingLidFrame.Value;
+        set => Instance!.startingLidFrame.Value = value;
+    }
+
+    public static void Init(IModHelper helper) => Instance ??= new ModState(helper);
 
     private void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e) => this.backups = null;
 }

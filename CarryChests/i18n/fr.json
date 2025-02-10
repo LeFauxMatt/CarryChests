@@ -1,12 +1,18 @@
 {
   "alert.carry-chest-limit": "Ne peut pas transporter davantage de coffre",
   "alert.command-backup.invalid-context": "Must be in game to show backups.",
+  "alert.mod-disabled": "Disabled Carry Chests. Press {{button}} to enable.",
+  "alert.mod-enabled": "Enabled Carry Chests. Press {{button}} to disable.",
   "command.carry-chests.description": "Type 'carry_chests help' to list available commands.",
   "command.backups.description": "Open a menu showing backup copies of all carried chests.",
   "command.help.description": "Commands:",
   "command.unknown.description": "That is not a valid command.",
+  "config-option.enabled.name": "Enabled",
+  "config-option.enabled.description": "Global toggle to enable or disable the mod.",
   "config-option.grab-empty-as-item.name": "Grab Empty as Item",
   "config-option.grab-empty-as-item.description": "Grab empty chests as items so that they are able to stack.",
+  "config-option.maximum-reach.name": "Maximum Reach",
+  "config-option.maximum-reach.description": "The number of tiles away that a chest can be grabbed.",
   "config-option.open-held-chest.name": "Ouvrir les coffres portés",
   "config-option.open-held-chest.description": "Vous permet d’ouvrir les coffres transportés.",
   "config-option.override-toool.name": "Ramassage par l’outil",
@@ -19,5 +25,7 @@
   "config-option.slowness-limit.description": "Le nombre de coffres qui peuvent être transportés avant que l’effet de ralentissement ne s’applique.",
   "config-option.swap-chests.name": "Swap Chests",
   "config-option.swap-chests.description": "Using a chest on a placed chest will combine inventories and swap them.",
+  "config-option.toggle-enabled.name": "Toggle Enabled",
+  "config-option.toggle-enabled.description": "Assign a keybind to toggle the mod on or off.",
   "effect.overburdened": "Surchargé (coffres)"
 }

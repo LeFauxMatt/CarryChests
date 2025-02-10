@@ -45,6 +45,6 @@ A slowness effect will be applied if you carry too many chests.
 | Japanese   | [❌️](CarryChests/i18n/ja.json) |
 | Korean     | [❔](CarryChests/i18n/ko.json) |
 | Portuguese | [❌️](CarryChests/i18n/pt.json) |
-| Russian    | [❌️](CarryChests/i18n/ru.json) |
+| Russian    | [❔](CarryChests/i18n/ru.json) |
 | Spanish    | [❌️](CarryChests/i18n/es.json) |
 | Turkish    | [❌️](CarryChests/i18n/tr.json) |

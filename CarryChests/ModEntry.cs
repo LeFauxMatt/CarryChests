@@ -70,6 +70,37 @@ internal sealed class ModEntry : Mod
         Log.Trace("Removing the slowness effect");
     }
 
+    private static void OnButtonsChanged(object? sender, ButtonsChangedEventArgs e)
+    {
+        if (!ModState.Config.ToggleEnabled.JustPressed())
+        {
+            return;
+        }
+
+        ModState.ConfigHelper.Temp.Enabled = !ModState.Config.Enabled;
+        ModState.ConfigHelper.Save();
+
+        if (ModState.Config.Enabled)
+        {
+            Log.Alert(I18n.Alert_ModEnabled(ModState.Config.ToggleEnabled.ToString()));
+            return;
+        }
+
+        Log.Alert(I18n.Alert_ModDisabled(ModState.Config.ToggleEnabled.ToString()));
+    }
+
+    private static void OnMenuChanged(object? sender, MenuChangedEventArgs e)
+    {
+        if (e.OldMenu is not ItemGrabMenu { sourceItem: Chest { playerChest.Value: true } chest })
+        {
+            return;
+        }
+
+        ModState.Backups.SyncBackup(chest);
+        ModState.Backups.RemoveEmptySlots();
+        ModState.FrameCounter = 0;
+    }
+
     private void OnCommandReceived(CommandReceivedEventArgs e)
     {
         switch (e.Command)
@@ -102,8 +133,8 @@ internal sealed class ModEntry : Mod
             }
 
             var tile = e.Button.TryGetController(out _) ? e.Cursor.GrabTile : e.Cursor.Tile;
-            if (Math.Abs(Game1.player.Tile.X - tile.X) > 1 ||
-                Math.Abs(Game1.player.Tile.Y - tile.Y) > 1 ||
+            if (Math.Abs(Game1.player.Tile.X - tile.X) > ModState.Config.MaximumReach ||
+                Math.Abs(Game1.player.Tile.Y - tile.Y) > ModState.Config.MaximumReach ||
                 !Game1.currentLocation.Objects.TryGetValue(tile, out var obj)
                 || obj is not Chest chest)
             {
@@ -127,7 +158,7 @@ internal sealed class ModEntry : Mod
             return;
         }
 
-        if (!e.Button.IsActionButton() || !ModState.Config.OpenHeldChest)
+        if (!e.Button.IsActionButton() || !ModState.Config.OpenHeldChest || ModState.FrameCounter != 0)
         {
             return;
         }
@@ -135,7 +166,10 @@ internal sealed class ModEntry : Mod
         if (Context.IsPlayerFree && Game1.player.ActiveObject is Chest heldChest)
         {
             this.Helper.Input.Suppress(e.Button);
-            heldChest.ShowMenu();
+            this.Helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked;
+            ModState.FrameCounter = 1;
+            ModState.StartingLidFrame = heldChest.startingLidFrame.Value;
+            ModState.LastLidFrame = heldChest.getLastLidFrame() - ModState.StartingLidFrame;
             return;
         }
 
@@ -159,8 +193,9 @@ internal sealed class ModEntry : Mod
             }
 
             var slot = slots.FirstOrDefault(slot => slot.containsPoint(mouseX, mouseY));
-            if (slot is null || !int.TryParse(slot.name, out var index) ||
-                items[index] is not Chest chest)
+            if (slot is null ||
+                !int.TryParse(slot.name, out var index) ||
+                items.ElementAtOrDefault(index) is not Chest chest)
             {
                 return;
             }
@@ -170,9 +205,34 @@ internal sealed class ModEntry : Mod
         });
     }
 
+    private void OnUpdateTicked(object? sender, UpdateTickedEventArgs e)
+    {
+        if (!Context.IsPlayerFree || Game1.player.ActiveObject is not Chest heldChest)
+        {
+            this.Helper.Events.GameLoop.UpdateTicked -= this.OnUpdateTicked;
+            return;
+        }
+
+        if (ModState.FrameCounter / 5 <= ModState.LastLidFrame)
+        {
+            return;
+        }
+
+        heldChest.ShowMenu();
+        this.Helper.Events.GameLoop.UpdateTicked -= this.OnUpdateTicked;
+    }
+
     private void OnConfigChanged(ConfigChangedEventArgs<ModConfig> e)
     {
+        this.Helper.Events.Input.ButtonPressed -= this.OnButtonPressed;
         this.Helper.Events.GameLoop.OneSecondUpdateTicked -= OnOneSecondUpdateTicked;
+
+        if (!e.Config.Enabled)
+        {
+            return;
+        }
+
+        this.Helper.Events.Input.ButtonPressed += this.OnButtonPressed;
         if (e.Config.SlownessLimit > 0 && e.Config.SlownessAmount != 0)
         {
             this.Helper.Events.GameLoop.OneSecondUpdateTicked += OnOneSecondUpdateTicked;
@@ -181,12 +241,22 @@ internal sealed class ModEntry : Mod
 
     private void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
     {
+        this.Helper.Events.Display.MenuChanged -= OnMenuChanged;
         this.Helper.Events.Input.ButtonPressed -= this.OnButtonPressed;
+        this.Helper.Events.Input.ButtonsChanged -= OnButtonsChanged;
         this.Helper.Events.GameLoop.OneSecondUpdateTicked -= OnOneSecondUpdateTicked;
     }
 
     private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
     {
+        this.Helper.Events.Display.MenuChanged += OnMenuChanged;
+        this.Helper.Events.Input.ButtonsChanged += OnButtonsChanged;
+
+        if (!ModState.Config.Enabled)
+        {
+            return;
+        }
+
         this.Helper.Events.Input.ButtonPressed += this.OnButtonPressed;
         if (ModState.Config.SlownessLimit > 0 && ModState.Config.SlownessAmount != 0)
         {
